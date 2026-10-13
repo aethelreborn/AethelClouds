@@ -19,31 +19,31 @@ function shell(args, env = {}) {
 }
 
 function fixture(callback) {
-  const temporary=mkdtempSync(path.join(os.tmpdir(),'jtg-cloud-installer-'));
-  try { return callback(temporary,{JTG_TEST_ROOT:temporary.replaceAll('\\','/')}); }
+  const temporary=mkdtempSync(path.join(os.tmpdir(),'aethel-clouds-installer-'));
+  try { return callback(temporary,{Aethel_TEST_ROOT:temporary.replaceAll('\\','/')}); }
   finally {assert.equal(path.dirname(temporary),os.tmpdir());rmSync(temporary,{recursive:true,force:true});}
 }
 
 const mockPm2 = `
   pm2() {
-    printf '%s|%s\\n' "$PM2_HOME" "$*" >> "$JTG_TEST_ROOT/actions"
+    printf '%s|%s\\n' "$PM2_HOME" "$*" >> "$Aethel_TEST_ROOT/actions"
     case "$1" in
       jlist) printf '%s\\n' "$MOCK_PM2_APPS";;
-      delete) [[ "$2" == jtg-cloud ]] || return 99; MOCK_PM2_APPS='[{"name":"other-app","pm2_env":{"pm_exec_path":"/srv/other/server.js","status":"online"}}]';;
+      delete) [[ "$2" == aethel-clouds ]] || return 99; MOCK_PM2_APPS='[{"name":"other-app","pm2_env":{"pm_exec_path":"/srv/other/server.js","status":"online"}}]';;
     esac
   }
 `;
 
 const scopedRemoval = `
-  APP_DIR="$JTG_TEST_ROOT/app"; LEGACY_DIR="$JTG_TEST_ROOT/legacy"
-  LEGACY_HOME="$JTG_TEST_ROOT/home"; LEGACY_RUNTIME="$JTG_TEST_ROOT/runtime"
-  MANAGER_FILE="$JTG_TEST_ROOT/manager.sh"; LOG_FILE="$JTG_TEST_ROOT/install.log"
+  APP_DIR="$Aethel_TEST_ROOT/app"; LEGACY_DIR="$Aethel_TEST_ROOT/legacy"
+  LEGACY_HOME="$Aethel_TEST_ROOT/home"; LEGACY_RUNTIME="$Aethel_TEST_ROOT/runtime"
+  MANAGER_FILE="$Aethel_TEST_ROOT/manager.sh"; LOG_FILE="$Aethel_TEST_ROOT/install.log"
   require_root() { return 0; }
   validate_removal_path() { case "$1" in "$APP_DIR"|"$LEGACY_DIR"|"$LEGACY_HOME"|"$LEGACY_RUNTIME"|"$MANAGER_FILE") return 0;; *) return 99;; esac; }
   cleanup_pm2_files() { return 0; }
   legacy_pm2_exists() { return 1; }
   pgrep() { return 1; }
-  cd() { if [[ "$1" == /root ]]; then builtin cd "$JTG_TEST_ROOT"; else builtin cd "$@"; fi; }
+  cd() { if [[ "$1" == /root ]]; then builtin cd "$Aethel_TEST_ROOT"; else builtin cd "$@"; fi; }
   rm() {
     if [[ "$1" == -rf ]]; then
       [[ "$#" == 4 && "$2" == --one-file-system && "$3" == -- && "$PWD" != "$4" ]] || return 99
@@ -61,9 +61,9 @@ test('installer preview is noninteractive and does not invoke system commands', 
     export -f apt-get curl git npm systemctl runuser
     bash ./install.sh --dry-run
   `]);
-  assert.match(output, /JTG Studio/);
-  assert.match(output, /git clone --branch main https:\/\/github\.com\/aethelreborn\/AethelClouds\.git \/root\/jtg-cloud/);
-  assert.match(output, /cd \/root\/jtg-cloud\n/);
+  assert.match(output, /Aethel Studio/);
+  assert.match(output, /git clone --branch main https:\/\/github\.com\/aethelreborn\/AethelClouds\.git \/root\/aethel-clouds/);
+  assert.match(output, /cd \/root\/aethel-clouds\n/);
   assert.match(output, /npm install -g pm2/);
   assert.match(output, /pm2 startup systemd -u root --hp \/root/);
   assert.match(output, /\[10\/10\] Verify cloud health/);
@@ -86,19 +86,19 @@ test('installer supports bold terminals, plain terminals and menu exit', { skip:
   assert.match(menu, /Restart cloud/);
   assert.doesNotMatch(menu, /Start \/ restart/);
   assert.match(menu, /Repair \/ migrate installation/);
-  assert.match(menu, /Uninstall JTG Cloud/);
+  assert.match(menu, /Uninstall Aethel-clouds/);
 });
 
 test('private checkout deployment clones committed source without data or Git credentials', { skip: !available }, () => {
-  const temporary = mkdtempSync(path.join(os.tmpdir(), 'jtg-cloud-installer-'));
+  const temporary = mkdtempSync(path.join(os.tmpdir(), 'aethel-clouds-installer-'));
   try {
     const output = shell(['-c', `
       source ./install.sh
-      SOURCE_DIR="$JTG_TEST_ROOT/source"
-      APP_DIR="$JTG_TEST_ROOT/installed"
-      LOG_FILE="$JTG_TEST_ROOT/install.log"
+      SOURCE_DIR="$Aethel_TEST_ROOT/source"
+      APP_DIR="$Aethel_TEST_ROOT/installed"
+      LOG_FILE="$Aethel_TEST_ROOT/install.log"
       mkdir -p "$SOURCE_DIR/src" "$SOURCE_DIR/data"
-      printf '{"name":"jtg-cloud"}\\n' > "$SOURCE_DIR/package.json"
+      printf '{"name":"aethel-clouds"}\\n' > "$SOURCE_DIR/package.json"
       printf '// fixture\\n' > "$SOURCE_DIR/src/server.mjs"
       printf '.env\\ndata/\\n' > "$SOURCE_DIR/.gitignore"
       git init --quiet --initial-branch=main "$SOURCE_DIR"
@@ -115,10 +115,10 @@ test('private checkout deployment clones committed source without data or Git cr
       [[ "$(git symbolic-ref --short HEAD)" == main ]]
       [[ "$(git remote get-url origin)" == "$REPO_URL" ]]
       [[ -z "$(git config --local --get credential.helper || true)" ]]
-    `], { JTG_TEST_ROOT: temporary.replaceAll('\\', '/') });
+    `], { Aethel_TEST_ROOT: temporary.replaceAll('\\', '/') });
     assert.match(output, /Source ready/);
     const installed = path.join(temporary, 'installed');
-    assert.equal(JSON.parse(readFileSync(path.join(installed, 'package.json'))).name, 'jtg-cloud');
+    assert.equal(JSON.parse(readFileSync(path.join(installed, 'package.json'))).name, 'aethel-clouds');
     for (const filename of ['.env', 'data', 'untracked.txt']) assert.equal(existsSync(path.join(installed, filename)), false);
   } finally {
     // The target is the exact directory returned by mkdtemp, under the OS temp root.
@@ -128,18 +128,18 @@ test('private checkout deployment clones committed source without data or Git cr
 });
 
 test('failed repository authentication stops cloning before project setup', { skip: !available }, () => {
-  const temporary = mkdtempSync(path.join(os.tmpdir(), 'jtg-cloud-installer-'));
+  const temporary = mkdtempSync(path.join(os.tmpdir(), 'aethel-clouds-installer-'));
   try {
     shell(['-c', `
       source ./install.sh
-      SOURCE_DIR="$JTG_TEST_ROOT/nonexistent-source"
-      APP_DIR="$JTG_TEST_ROOT/installed"
-      LOG_FILE="$JTG_TEST_ROOT/install.log"
+      SOURCE_DIR="$Aethel_TEST_ROOT/nonexistent-source"
+      APP_DIR="$Aethel_TEST_ROOT/installed"
+      LOG_FILE="$Aethel_TEST_ROOT/install.log"
       git() { return 128; }
       node() { printf 'ERROR: setup ran after clone failure\\n'; return 99; }
       if clone_project; then exit 98; fi
       [[ ! -e "$APP_DIR" ]]
-    `], { JTG_TEST_ROOT: temporary.replaceAll('\\', '/') });
+    `], { Aethel_TEST_ROOT: temporary.replaceAll('\\', '/') });
   } finally {
     assert.equal(path.dirname(temporary), os.tmpdir());
     rmSync(temporary, { recursive: true, force: true });
@@ -147,13 +147,13 @@ test('failed repository authentication stops cloning before project setup', { sk
 });
 
 test('updater follows a renamed remote branch and refuses divergent history', { skip: !available }, () => {
-  const temporary = mkdtempSync(path.join(os.tmpdir(), 'jtg-cloud-installer-'));
+  const temporary = mkdtempSync(path.join(os.tmpdir(), 'aethel-clouds-installer-'));
   try {
     shell(['-c', `
       source ./update.sh
-      repo="$JTG_TEST_ROOT/repository"
-      remote="$JTG_TEST_ROOT/remote.git"
-      checkout="$JTG_TEST_ROOT/checkout"
+      repo="$Aethel_TEST_ROOT/repository"
+      remote="$Aethel_TEST_ROOT/remote.git"
+      checkout="$Aethel_TEST_ROOT/checkout"
       git init --quiet --initial-branch=previous-release "$repo"
       git -C "$repo" -c user.name='Update Test' -c user.email='test@example.invalid' commit --quiet --allow-empty -m initial
       git clone --quiet --bare "$repo" "$remote"
@@ -180,7 +180,7 @@ test('updater follows a renamed remote branch and refuses divergent history', { 
       git fetch --quiet --prune origin
       if follow_remote_branch; then exit 98; fi
       [[ "$(git symbolic-ref --short HEAD)" == main ]]
-    `], { JTG_TEST_ROOT: temporary.replaceAll('\\', '/') });
+    `], { Aethel_TEST_ROOT: temporary.replaceAll('\\', '/') });
   } finally {
     assert.equal(path.dirname(temporary), os.tmpdir());
     rmSync(temporary, { recursive: true, force: true });
@@ -188,11 +188,11 @@ test('updater follows a renamed remote branch and refuses divergent history', { 
 });
 
 test('rollback refuses to start version 1.0 against chunked file storage', { skip: !available }, () => {
-  const temporary = mkdtempSync(path.join(os.tmpdir(), 'jtg-cloud-installer-'));
+  const temporary = mkdtempSync(path.join(os.tmpdir(), 'aethel-clouds-installer-'));
   try {
     shell(['-c', `
       source ./update.sh
-      APP_DIR="$JTG_TEST_ROOT/application"
+      APP_DIR="$Aethel_TEST_ROOT/application"
       mkdir -p "$APP_DIR/data"
       cd "$APP_DIR"
       printf 'DATA_DIR=./data\\n' > .env
@@ -207,7 +207,7 @@ test('rollback refuses to start version 1.0 against chunked file storage', { ski
       printf '{"version":"1.0.0"}\\n' > package.json
       node -e "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync('data/cloud.sqlite');db.exec(\\"DELETE FROM entries;DELETE FROM file_parts;INSERT INTO upload_parts VALUES ('pending');\\");db.close()"
       if previous_restart_safe; then exit 98; fi
-    `], { JTG_TEST_ROOT: temporary.replaceAll('\\', '/') });
+    `], { Aethel_TEST_ROOT: temporary.replaceAll('\\', '/') });
   } finally {
     assert.equal(path.dirname(temporary), os.tmpdir());
     rmSync(temporary, { recursive: true, force: true });
@@ -215,11 +215,11 @@ test('rollback refuses to start version 1.0 against chunked file storage', { ski
 });
 
 test('updater migrates the previous network setup once and preserves unrelated settings', { skip: !available }, () => {
-  const temporary=mkdtempSync(path.join(os.tmpdir(),'jtg-cloud-installer-'));
+  const temporary=mkdtempSync(path.join(os.tmpdir(),'aethel-clouds-installer-'));
   try {
     shell(['-c', `
       source ./update.sh
-      APP_DIR="$JTG_TEST_ROOT/application"
+      APP_DIR="$Aethel_TEST_ROOT/application"
       mkdir -p "$APP_DIR"
       printf 'PORT=6696\\nHOST=127.0.0.1\\nAPP_URL=https://previous.example\\nTRUST_PROXY=true\\nCOOKIE_SECURE=true\\nDATA_DIR=./kept-data\\nREGISTRATION_DOMAIN=members.example\\n' > "$APP_DIR/.env"
       configure_service_env
@@ -234,15 +234,15 @@ test('updater migrates the previous network setup once and preserves unrelated s
       configure_service_env
       grep -qx 'OPERATOR_CUSTOM_FIELD=keep-me' "$APP_DIR/.env"
       [[ "$(grep -c '^PORT=' "$APP_DIR/.env")" == 1 ]]
-    `],{JTG_TEST_ROOT:temporary.replaceAll('\\','/')});
+    `],{Aethel_TEST_ROOT:temporary.replaceAll('\\','/')});
   } finally {assert.equal(path.dirname(temporary),os.tmpdir());rmSync(temporary,{recursive:true,force:true});}
 });
 
 test('PM2 installation uses npm global and the standard root daemon', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    LOG_FILE="$JTG_TEST_ROOT/install.log"
-    npm() { printf '%s|%s\\n' "$NPM_CONFIG_PREFIX" "$*" > "$JTG_TEST_ROOT/npm-call"; }
+    LOG_FILE="$Aethel_TEST_ROOT/install.log"
+    npm() { printf '%s|%s\\n' "$NPM_CONFIG_PREFIX" "$*" > "$Aethel_TEST_ROOT/npm-call"; }
     pm2() { return 0; }
     install_pm2
     [[ "$PM2_HOME" == /root/.pm2 ]]
@@ -256,13 +256,13 @@ test('PM2 ownership checks reject name collisions including duplicate names', {s
     ${mockPm2}
     MOCK_PM2_APPS='[]'
     [[ "$(process_state "$PM2_HOME")" == missing ]]
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/root/jtg-cloud/src/server.mjs","status":"stopped"}}]'
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/root/aethel-clouds/src/server.mjs","status":"stopped"}}]'
     [[ "$(process_state "$PM2_HOME")" == stopped ]]
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/opt/jtg-cloud/src/server.mjs","status":"online"}}]'
-    [[ "$(process_state /home/jtgcloud/.pm2)" == online ]]
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/srv/other/server.js"}}]'
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/opt/aethel-clouds/src/server.mjs","status":"online"}}]'
+    [[ "$(process_state /home/aethelcloud/.pm2)" == online ]]
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/srv/other/server.js"}}]'
     if process_state "$PM2_HOME"; then exit 98; fi
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/root/jtg-cloud/src/server.mjs"}},{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/srv/other/server.js"}}]'
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/root/aethel-clouds/src/server.mjs"}},{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/srv/other/server.js"}}]'
     if process_state "$PM2_HOME"; then exit 98; fi
   `],env);
   assert.doesNotMatch(readFileSync(path.join(temporary,'actions'),'utf8'),/delete|stop|kill|save/);
@@ -271,12 +271,12 @@ test('PM2 ownership checks reject name collisions including duplicate names', {s
 test('managed path guard refuses broad and unexpected removal targets', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    rm() { printf 'UNEXPECTED REMOVE\\n' > "$JTG_TEST_ROOT/unsafe"; return 97; }
-    for candidate in / /root /opt /root/jtg-cloud/.. /root/other "$JTG_TEST_ROOT"; do
+    rm() { printf 'UNEXPECTED REMOVE\\n' > "$Aethel_TEST_ROOT/unsafe"; return 97; }
+    for candidate in / /root /opt /root/aethel-clouds/.. /root/other "$Aethel_TEST_ROOT"; do
       if (validate_directory "$candidate"); then exit 98; fi
       if (validate_removal_path "$candidate"); then exit 98; fi
     done
-    [[ ! -e "$JTG_TEST_ROOT/unsafe" ]]
+    [[ ! -e "$Aethel_TEST_ROOT/unsafe" ]]
   `],env);
   assert.equal(existsSync(path.join(temporary,'unsafe')),false);
 }));
@@ -284,8 +284,8 @@ test('managed path guard refuses broad and unexpected removal targets', {skip:!a
 test('managed storage refuses external, overlapping and redirected directories', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    mkdir -p "$JTG_TEST_ROOT/app" "$JTG_TEST_ROOT/external"
-    cd "$JTG_TEST_ROOT/app"
+    mkdir -p "$Aethel_TEST_ROOT/app" "$Aethel_TEST_ROOT/external"
+    cd "$Aethel_TEST_ROOT/app"
     printf 'DATA_DIR=./data\\nBACKUP_DIR=./backups\\n' > .env
     validate_storage
     printf 'DATA_DIR=../external\\nBACKUP_DIR=./backups\\n' > .env
@@ -301,11 +301,11 @@ test('managed storage refuses external, overlapping and redirected directories',
 test('environment migration rewrites managed absolute paths and preserves custom fields', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    APP_DIR="$JTG_TEST_ROOT/app"
+    APP_DIR="$Aethel_TEST_ROOT/app"
     mkdir -p "$APP_DIR"
     cd "$APP_DIR"
-    printf 'PORT=6696\\nDATA_DIR="/opt/jtg-cloud/private-data"\\nBACKUP_DIR=/opt/jtg-cloud/private-backups\\nREGISTRATION_DOMAIN=members.example\\nCUSTOM_VALUE=keep-me\\n' > .env
-    MSYS2_ARG_CONV_EXCL=/opt/jtg-cloud configure_environment /opt/jtg-cloud
+    printf 'PORT=6696\\nDATA_DIR="/opt/aethel-clouds/private-data"\\nBACKUP_DIR=/opt/aethel-clouds/private-backups\\nREGISTRATION_DOMAIN=members.example\\nCUSTOM_VALUE=keep-me\\n' > .env
+    MSYS2_ARG_CONV_EXCL=/opt/aethel-clouds configure_environment /opt/aethel-clouds
     configure_environment
     grep -qx 'PORT=6969' .env
     grep -qx 'HOST=0.0.0.0' .env
@@ -317,14 +317,14 @@ test('environment migration rewrites managed absolute paths and preserves custom
   `],env);
   const text=readFileSync(path.join(temporary,'app','.env'),'utf8');
   assert.match(text,new RegExp(`DATA_DIR="${temporary.replaceAll('\\','/').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}/app/private-data"`));
-  assert.doesNotMatch(text,/\/opt\/jtg-cloud/);
+  assert.doesNotMatch(text,/\/opt\/aethel-clouds/);
 }));
 
 test('offline repair backup and owner check preserve database, blobs, key and environment', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    mkdir -p "$JTG_TEST_ROOT/app/data/blobs"
-    cd "$JTG_TEST_ROOT/app"
+    mkdir -p "$Aethel_TEST_ROOT/app/data/blobs"
+    cd "$Aethel_TEST_ROOT/app"
     printf 'DATA_DIR=./data\\nBACKUP_DIR=./backups\\nCUSTOM_VALUE=kept\\n' > .env
     printf 'encrypted fixture' > data/blobs/encrypted-part
     printf 'private fixture key' > data/encryption.key
@@ -338,8 +338,8 @@ test('offline repair backup and owner check preserve database, blobs, key and en
 test('backup refuses a missing encryption key and owner check refuses a corrupt database', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    mkdir -p "$JTG_TEST_ROOT/app/data/blobs" "$JTG_TEST_ROOT/app/src"
-    cd "$JTG_TEST_ROOT/app"
+    mkdir -p "$Aethel_TEST_ROOT/app/data/blobs" "$Aethel_TEST_ROOT/app/src"
+    cd "$Aethel_TEST_ROOT/app"
     printf 'DATA_DIR=./data\\nBACKUP_DIR=./backups\\n' > .env
     printf 'not-a-database' > data/cloud.sqlite
     printf 'process.exit(98)\\n' > src/cli.mjs
@@ -353,60 +353,60 @@ test('backup refuses a missing encryption key and owner check refuses a corrupt 
 test('restart recreates a missing PM2 entry using the global root account', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    APP_DIR="$JTG_TEST_ROOT/app"
+    APP_DIR="$Aethel_TEST_ROOT/app"
     mkdir -p "$APP_DIR/.git"
     printf 'PORT=6969\\n' > "$APP_DIR/.env"
     require_root() { return 0; }
     validate_directory() { [[ "$1" == "$APP_DIR" && -d "$APP_DIR/.git" ]]; }
-    health() { printf 'health\\n' >> "$JTG_TEST_ROOT/actions"; }
+    health() { printf 'health\\n' >> "$Aethel_TEST_ROOT/actions"; }
     ${mockPm2}
     MOCK_PM2_APPS='[]'
     restart_project
   `],env);
   const actions=readFileSync(path.join(temporary,'actions'),'utf8');
-  assert.match(actions,/\/root\/\.pm2\|startOrRestart ecosystem.config.cjs --only jtg-cloud --update-env --interpreter /);
+  assert.match(actions,/\/root\/\.pm2\|startOrRestart ecosystem.config.cjs --only aethel-clouds --update-env --interpreter /);
   assert.match(actions,/health\n\/root\/\.pm2\|save/);
-  assert.doesNotMatch(actions,/runuser|\/home\/jtgcloud|\/opt\/jtg-cloud-runtime/);
+  assert.doesNotMatch(actions,/runuser|\/home\/aethelcloud|\/opt\/aethel-clouds-runtime/);
 }));
 
 test('uninstall uses Y/N, works repeatedly and preserves other apps', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    APP_DIR="$JTG_TEST_ROOT/app"; LEGACY_DIR="$JTG_TEST_ROOT/legacy"
-    LEGACY_HOME="$JTG_TEST_ROOT/home"; LEGACY_RUNTIME="$JTG_TEST_ROOT/runtime"; MANAGER_FILE="$JTG_TEST_ROOT/manager.sh"
-    LOG_FILE="$JTG_TEST_ROOT/install.log"
+    APP_DIR="$Aethel_TEST_ROOT/app"; LEGACY_DIR="$Aethel_TEST_ROOT/legacy"
+    LEGACY_HOME="$Aethel_TEST_ROOT/home"; LEGACY_RUNTIME="$Aethel_TEST_ROOT/runtime"; MANAGER_FILE="$Aethel_TEST_ROOT/manager.sh"
+    LOG_FILE="$Aethel_TEST_ROOT/install.log"
     mkdir -p "$APP_DIR/.git" "$APP_DIR/data/blobs" "$APP_DIR/backups"
     printf 'DATA_DIR=./data\\nBACKUP_DIR=./backups\\n' > "$APP_DIR/.env"
     printf 'private content' > "$APP_DIR/data/blobs/file"
-    printf 'keep another app' > "$JTG_TEST_ROOT/other-app"
+    printf 'keep another app' > "$Aethel_TEST_ROOT/other-app"
     require_root() { return 0; }
     validate_removal_path() { case "$1" in "$APP_DIR"|"$LEGACY_DIR"|"$LEGACY_HOME"|"$LEGACY_RUNTIME"|"$MANAGER_FILE") return 0;; *) return 99;; esac; }
     cleanup_pm2_files() { return 0; }
     legacy_pm2_exists() { return 1; }
-    cd() { if [[ "$1" == /root ]]; then builtin cd "$JTG_TEST_ROOT"; else builtin cd "$@"; fi; }
+    cd() { if [[ "$1" == /root ]]; then builtin cd "$Aethel_TEST_ROOT"; else builtin cd "$@"; fi; }
     rm() {
       if [[ "$1" == -rf ]]; then
         [[ "$#" == 4 && "$2" == --one-file-system && "$3" == -- && "$4" == "$APP_DIR" && "$PWD" != "$APP_DIR" ]] || return 99
-        printf 'remove-project\\n' >> "$JTG_TEST_ROOT/actions"
+        printf 'remove-project\\n' >> "$Aethel_TEST_ROOT/actions"
         command rm -rf -- "$APP_DIR"
       else
         [[ "$#" == 3 && "$1" == -f && "$2" == -- && "$3" == "$LOG_FILE" ]] || return 99
       fi
     }
     ${mockPm2}
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/root/jtg-cloud/src/server.mjs","status":"online"}},{"name":"other-app","pm2_env":{"pm_exec_path":"/srv/other/server.js","status":"online"}}]'
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/root/aethel-clouds/src/server.mjs","status":"online"}},{"name":"other-app","pm2_env":{"pm_exec_path":"/srv/other/server.js","status":"online"}}]'
     uninstall_project <<< 'cancel'
     uninstall_project <<< 'n'
     uninstall_project <<< ''
-    [[ -d "$APP_DIR" && ! -e "$JTG_TEST_ROOT/actions" ]]
+    [[ -d "$APP_DIR" && ! -e "$Aethel_TEST_ROOT/actions" ]]
     uninstall_project <<< 'Y'
-    [[ ! -e "$APP_DIR" && -f "$JTG_TEST_ROOT/other-app" ]]
+    [[ ! -e "$APP_DIR" && -f "$Aethel_TEST_ROOT/other-app" ]]
     uninstall_project <<< 'yes'
-    [[ ! -e "$APP_DIR" && -f "$JTG_TEST_ROOT/other-app" ]]
+    [[ ! -e "$APP_DIR" && -f "$Aethel_TEST_ROOT/other-app" ]]
     [[ "$MOCK_PM2_APPS" == '[{"name":"other-app","pm2_env":{"pm_exec_path":"/srv/other/server.js","status":"online"}}]' ]]
   `],env);
   const actions=readFileSync(path.join(temporary,'actions'),'utf8');
-  assert.match(actions,/delete jtg-cloud\n\/root\/\.pm2\|save --force\n\/root\/\.pm2\|save --force/);
+  assert.match(actions,/delete aethel-clouds\n\/root\/\.pm2\|save --force\n\/root\/\.pm2\|save --force/);
   assert.match(actions,/remove-project/);
   assert.doesNotMatch(actions,/delete other-app|kill|unstartup/);
 }));
@@ -415,7 +415,7 @@ test('partial and duplicate leftovers uninstall completely, then a new install g
   shell(['-c',`
     source ./install.sh
     ${scopedRemoval}
-    SOURCE_DIR="$JTG_TEST_ROOT/source"
+    SOURCE_DIR="$Aethel_TEST_ROOT/source"
     mkdir -p "$SOURCE_DIR" "$APP_DIR" "$LEGACY_DIR" "$LEGACY_HOME" "$LEGACY_RUNTIME"
     cp -R ./src "$SOURCE_DIR/src"
     cp package.json package-lock.json .env.example .gitignore "$SOURCE_DIR/"
@@ -432,7 +432,7 @@ test('partial and duplicate leftovers uninstall completely, then a new install g
     printf 'old manager' > "$MANAGER_FILE"
     cd "$APP_DIR"
     printf '%s' '{"displayName":"Old Owner","username":"old-owner","email":"old@example.invalid","password":"Old-fixture-password-123"}' | node --env-file=.env src/cli.mjs setup --stdin
-    cp data/encryption.key "$JTG_TEST_ROOT/key-before"
+    cp data/encryption.key "$Aethel_TEST_ROOT/key-before"
     mkdir backups
     printf 'old backup' > backups/old-backup
     # A half-uninstalled application has no Git metadata or package.json.
@@ -440,10 +440,10 @@ test('partial and duplicate leftovers uninstall completely, then a new install g
     pm2() {
       case "$1" in
         jlist) printf '%s\\n' "$MOCK_PM2_APPS";;
-        delete) [[ "$2" == jtg-cloud ]] || return 99; MOCK_PM2_APPS='[]';;
+        delete) [[ "$2" == aethel-clouds ]] || return 99; MOCK_PM2_APPS='[]';;
       esac
     }
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/root/jtg-cloud/src/server.mjs","status":"errored"}}]'
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/root/aethel-clouds/src/server.mjs","status":"errored"}}]'
     uninstall_project <<< 'y'
     for target in "$APP_DIR" "$LEGACY_DIR" "$LEGACY_HOME" "$LEGACY_RUNTIME" "$MANAGER_FILE"; do [[ ! -e "$target" ]]; done
     uninstall_project <<< 'Y'
@@ -453,8 +453,8 @@ test('partial and duplicate leftovers uninstall completely, then a new install g
     health() { return 0; }
     ensure_owner() { printf '%s' '{"displayName":"New Owner","username":"new-owner","email":"new@example.invalid","password":"New-fixture-password-123"}' | node --env-file=.env src/cli.mjs setup --stdin; }
     install_project
-    [[ -f "$APP_DIR/.jtg-installed" && ! -e "$APP_DIR/backups/old-backup" ]]
-    node --input-type=module - "$JTG_TEST_ROOT/key-before" <<'JS'
+    [[ -f "$APP_DIR/.aethel-installed" && ! -e "$APP_DIR/backups/old-backup" ]]
+    node --input-type=module - "$Aethel_TEST_ROOT/key-before" <<'JS'
 import fs from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 if(fs.readFileSync('data/encryption.key').equals(fs.readFileSync(process.argv[2]))) process.exit(98);
@@ -486,10 +486,10 @@ test('failed removal is reported without claiming uninstall success', {skip:!ava
 test('repair migrates an older fixture after a backup and retains its owner and files', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    APP_DIR="$JTG_TEST_ROOT/app"; LEGACY_DIR="$JTG_TEST_ROOT/legacy"
-    LOG_FILE="$JTG_TEST_ROOT/install.log"
+    APP_DIR="$Aethel_TEST_ROOT/app"; LEGACY_DIR="$Aethel_TEST_ROOT/legacy"
+    LOG_FILE="$Aethel_TEST_ROOT/install.log"
     mkdir -p "$LEGACY_DIR/data/blobs" "$LEGACY_DIR/src"
-    printf '{"name":"jtg-cloud","version":"1.2.0"}\\n' > "$LEGACY_DIR/package.json"
+    printf '{"name":"aethel-clouds","version":"1.2.0"}\\n' > "$LEGACY_DIR/package.json"
     printf '// fixture\\n' > "$LEGACY_DIR/src/server.mjs"
     printf '.env\\ndata/\\nbackups/\\n' > "$LEGACY_DIR/.gitignore"
     printf 'DATA_DIR=./data\\nBACKUP_DIR=./backups\\nPORT=6696\\n' > "$LEGACY_DIR/.env"
@@ -498,8 +498,8 @@ test('repair migrates an older fixture after a backup and retains its owner and 
     git init --quiet --initial-branch=main "$LEGACY_DIR"
     git -C "$LEGACY_DIR" add .
     git -C "$LEGACY_DIR" -c user.name='Repair Test' -c user.email='test@example.invalid' commit --quiet -m previous
-    git clone --quiet --bare "$LEGACY_DIR" "$JTG_TEST_ROOT/remote.git"
-    git -C "$LEGACY_DIR" remote add origin "$JTG_TEST_ROOT/remote.git"
+    git clone --quiet --bare "$LEGACY_DIR" "$Aethel_TEST_ROOT/remote.git"
+    git -C "$LEGACY_DIR" remote add origin "$Aethel_TEST_ROOT/remote.git"
     node --input-type=module - "$LEGACY_DIR/data/cloud.sqlite" <<'JS'
 import {DatabaseSync} from 'node:sqlite';
 const db=new DatabaseSync(process.argv[2]);
@@ -507,22 +507,22 @@ db.exec('CREATE TABLE users(id TEXT,role TEXT)');
 db.prepare('INSERT INTO users VALUES (?,?)').run('preserved-owner','owner');db.close();
 JS
     require_root() { return 0; }
-    linux_requirements() { printf 'requirements\\n' >> "$JTG_TEST_ROOT/actions"; }
+    linux_requirements() { printf 'requirements\\n' >> "$Aethel_TEST_ROOT/actions"; }
     install_node() { return 0; }
     install_pm2() { return 0; }
     # Keep production guards intact; this fixture validator only admits its two temporary paths.
     validate_directory() { [[ "$1" == "$APP_DIR" || "$1" == "$LEGACY_DIR" ]] && [[ -d "$1/.git" ]]; }
     legacy_pm2_exists() { return 1; }
-    health() { printf 'health\\n' >> "$JTG_TEST_ROOT/actions"; }
+    health() { printf 'health\\n' >> "$Aethel_TEST_ROOT/actions"; }
     show_addresses() { return 0; }
-    chown() { printf 'ownership|%s\\n' "$*" >> "$JTG_TEST_ROOT/actions"; }
-    chmod() { printf 'permissions|%s\\n' "$*" >> "$JTG_TEST_ROOT/actions"; }
-    npm() { printf 'npm|%s\\n' "$*" >> "$JTG_TEST_ROOT/actions"; }
+    chown() { printf 'ownership|%s\\n' "$*" >> "$Aethel_TEST_ROOT/actions"; }
+    chmod() { printf 'permissions|%s\\n' "$*" >> "$Aethel_TEST_ROOT/actions"; }
+    npm() { printf 'npm|%s\\n' "$*" >> "$Aethel_TEST_ROOT/actions"; }
     node() { if [[ "$1" == scripts/check.mjs ]]; then return 0; else command node "$@"; fi; }
     realpath() { if [[ "$*" == '-e /root' ]]; then printf '/root\\n'; else command realpath "$@"; fi; }
-    cd() { if [[ "$1" == /root ]]; then builtin cd "$JTG_TEST_ROOT"; else builtin cd "$@"; fi; }
+    cd() { if [[ "$1" == /root ]]; then builtin cd "$Aethel_TEST_ROOT"; else builtin cd "$@"; fi; }
     ${mockPm2}
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/opt/jtg-cloud/src/server.mjs","status":"errored"}}]'
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/opt/aethel-clouds/src/server.mjs","status":"errored"}}]'
     repair_project
     [[ ! -e "$LEGACY_DIR" && -f "$APP_DIR/data/encryption.key" ]]
     grep -qx 'PORT=6969' "$APP_DIR/.env"
@@ -532,7 +532,7 @@ JS
   assert.equal(existsSync(path.join(temporary,'legacy')),false);
   assert.equal(readFileSync(path.join(installed,'data','blobs','part'),'utf8'),'saved encrypted part');
   assert.equal(readFileSync(path.join(installed,'data','encryption.key'),'utf8'),'saved encryption key');
-  assert.equal(existsSync(path.join(installed,'.jtg-installed')),true);
+  assert.equal(existsSync(path.join(installed,'.aethel-installed')),true);
   assert.match(readFileSync(path.join(temporary,'actions'),'utf8'),/ownership\|-R root:root/);
   const backups=readdirSync(path.join(installed,'backups'));
   assert.equal(backups.length,1);
@@ -543,22 +543,22 @@ test('legacy PM2 retirement preserves another app and its startup service', {ski
   shell(['-c',`
     source ./install.sh
     legacy_pm2_exists() { return 0; }
-    systemctl() { printf 'UNEXPECTED SYSTEM CHANGE' > "$JTG_TEST_ROOT/unsafe"; return 99; }
+    systemctl() { printf 'UNEXPECTED SYSTEM CHANGE' > "$Aethel_TEST_ROOT/unsafe"; return 99; }
     ${mockPm2}
-    MOCK_PM2_APPS='[{"name":"jtg-cloud","pm2_env":{"pm_exec_path":"/opt/jtg-cloud/src/server.mjs","status":"stopped"}},{"name":"other-app","pm2_env":{"pm_exec_path":"/srv/other/server.js","status":"online"}}]'
+    MOCK_PM2_APPS='[{"name":"aethel-clouds","pm2_env":{"pm_exec_path":"/opt/aethel-clouds/src/server.mjs","status":"stopped"}},{"name":"other-app","pm2_env":{"pm_exec_path":"/srv/other/server.js","status":"online"}}]'
     retire_legacy_pm2
-    [[ ! -e "$JTG_TEST_ROOT/unsafe" && "$PM2_HOME" == /root/.pm2 ]]
+    [[ ! -e "$Aethel_TEST_ROOT/unsafe" && "$PM2_HOME" == /root/.pm2 ]]
   `],env);
   const actions=readFileSync(path.join(temporary,'actions'),'utf8');
-  assert.match(actions,/\/home\/jtgcloud\/\.pm2\|delete jtg-cloud/);
+  assert.match(actions,/\/home\/aethelcloud\/\.pm2\|delete aethel-clouds/);
   assert.doesNotMatch(actions,/kill|stop other-app|\/root\/\.pm2\|delete/);
 }));
 
 test('health validation requires the expected cloud response and version', {skip:!available}, () => fixture((temporary,env)=>{
   shell(['-c',`
     source ./install.sh
-    mkdir -p "$JTG_TEST_ROOT/app"
-    cd "$JTG_TEST_ROOT/app"
+    mkdir -p "$Aethel_TEST_ROOT/app"
+    cd "$Aethel_TEST_ROOT/app"
     printf '{"version":"1.3.0"}\\n' > package.json
     curl() { printf '%s' "$MOCK_HEALTH"; }
     pm2() { return 0; }
@@ -577,7 +577,7 @@ test('health validation requires the expected cloud response and version', {skip
 test('repair fetch failure stops before touching the running service or existing data', {skip:!available}, () => fixture((temporary,env)=>{
   const result=spawnSync(bash,['-c',`
     source ./install.sh
-    APP_DIR="$JTG_TEST_ROOT/app"; LEGACY_DIR="$JTG_TEST_ROOT/legacy"; LOG_FILE="$JTG_TEST_ROOT/install.log"
+    APP_DIR="$Aethel_TEST_ROOT/app"; LEGACY_DIR="$Aethel_TEST_ROOT/legacy"; LOG_FILE="$Aethel_TEST_ROOT/install.log"
     mkdir -p "$APP_DIR/.git" "$APP_DIR/data"
     printf 'DATA_DIR=./data\\nBACKUP_DIR=./backups\\n' > "$APP_DIR/.env"
     printf 'preserve-me' > "$APP_DIR/data/existing"
@@ -585,7 +585,7 @@ test('repair fetch failure stops before touching the running service or existing
     linux_requirements() { return 0; }; install_node() { return 0; }; install_pm2() { return 0; }
     validate_directory() { [[ "$1" == "$APP_DIR" ]]; }
     git() { if [[ "$3" == status ]]; then return 0; else return 128; fi; }
-    pm2() { printf 'UNEXPECTED PM2 ACTION' > "$JTG_TEST_ROOT/unsafe"; return 99; }
+    pm2() { printf 'UNEXPECTED PM2 ACTION' > "$Aethel_TEST_ROOT/unsafe"; return 99; }
     repair_project
   `],{cwd:root,encoding:'utf8',timeout:30_000,env:{...process.env,TERM:'dumb',NO_COLOR:'1',...env}});
   assert.equal(result.status,128,`${result.stdout}\n${result.stderr}`);

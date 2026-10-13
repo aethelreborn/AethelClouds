@@ -11,7 +11,7 @@ import { fail, HttpError, integer, entryName } from './security.mjs';
 const TTL = 24 * 60 * 60 * 1000;
 const UUID = /^[a-f0-9-]{36}$/;
 const CLIENT_UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
-const aad = (userId, id, index, size) => Buffer.from(`JTG Cloud part v1:${userId}:${id}:${index}:${size}`);
+const aad = (userId, id, index, size) => Buffer.from(`Aethel-clouds part v1:${userId}:${id}:${index}:${size}`);
 
 export function reservedUploads(db, userId) {
   return db.prepare("SELECT COALESCE(SUM(size),0) AS bytes FROM upload_sessions WHERE user_id=? AND state='pending'").get(userId).bytes;

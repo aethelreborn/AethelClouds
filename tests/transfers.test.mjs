@@ -17,7 +17,7 @@ const fixture = size => {
 };
 
 test('chunked uploads preserve bytes, reservations, isolation and resumable downloads', async t => {
-  const temp = await mkdtemp(path.join(os.tmpdir(), 'jtg-cloud-transfer-'));
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'aethel-clouds-transfer-'));
   const dataDir = path.join(temp, 'data');
   const backups = path.join(temp, 'backups');
   let app, base;

@@ -9,8 +9,8 @@ import { createApp } from '../src/server.mjs';
 import { openStore } from '../src/database.mjs';
 import { GiB, ROOT } from '../src/config.mjs';
 
-test('JTG Cloud authentication, isolation, storage, permissions and recovery', async t => {
-  const temp = await mkdtemp(path.join(os.tmpdir(),'jtg-cloud-test-'));
+test('Aethel-clouds authentication, isolation, storage, permissions and recovery', async t => {
+  const temp = await mkdtemp(path.join(os.tmpdir(),'aethel-clouds-test-'));
   const dataDir=path.join(temp,'data');
   const ownerInput={username:'cloudowner',email:'owner@example.com',displayName:'Cloud Owner',password:'12345678'};
   let app;

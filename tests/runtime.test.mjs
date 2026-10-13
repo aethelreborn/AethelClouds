@@ -14,7 +14,7 @@ import { hashPassword } from '../src/security.mjs';
 import { fingerprintDigest } from '../public/fingerprint.js';
 
 test('PM2 Linux-style ESM wrapper starts an HTTP listener despite a different argv entry',async()=>{
-  const directory=await mkdtemp(path.join(os.tmpdir(),'jtg-pm2-wrapper-'));
+  const directory=await mkdtemp(path.join(os.tmpdir(),'aethel-pm2-wrapper-'));
   let child, output='';
   try {
     const wrapper=path.join(directory,'ProcessContainerFork.cjs');
@@ -45,7 +45,7 @@ test('PM2 Linux-style ESM wrapper starts an HTTP listener despite a different ar
 });
 
 test('PM2 config takes explicit .env values instead of retaining a previous port or origin',async()=>{
-  const directory=await mkdtemp(path.join(os.tmpdir(),'jtg-pm2-env-'));
+  const directory=await mkdtemp(path.join(os.tmpdir(),'aethel-pm2-env-'));
   try {
     const filename=path.join(directory,'ecosystem.config.cjs');
     await writeFile(filename,await readFile(path.join(ROOT,'ecosystem.config.cjs')));
@@ -83,7 +83,7 @@ test('service defaults to port 6969 and available IPv4 without a domain', () => 
 });
 
 test('direct localhost/IP login keeps origin and CSRF protection',async()=>{
-  const temporary=await mkdtemp(path.join(os.tmpdir(),'jtg-cloud-direct-'));
+  const temporary=await mkdtemp(path.join(os.tmpdir(),'aethel-clouds-direct-'));
   let app;
   try {
     app=await createApp({dataDir:temporary,port:0,host:'0.0.0.0',production:true,secureCookie:false,explicitAppUrl:false,trustProxy:false});
@@ -132,7 +132,7 @@ test('direct localhost/IP login keeps origin and CSRF protection',async()=>{
 });
 
 test('existing file-size caps migrate to unlimited once while data and quotas remain',async()=>{
-  const directory=await mkdtemp(path.join(os.tmpdir(),'jtg-cloud-limits-'));
+  const directory=await mkdtemp(path.join(os.tmpdir(),'aethel-clouds-limits-'));
   let store;
   try {
     store=openStore(directory);const key=await readFile(path.join(directory,'encryption.key'));

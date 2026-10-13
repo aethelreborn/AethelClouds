@@ -4,7 +4,7 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const GIB = 1024 ** 3, MIB = 1024 ** 2;
 const storage = { get(key) { try { return localStorage.getItem(key); } catch { return null; } }, set(key, value) { try { localStorage.setItem(key, value); } catch {} }, remove(key) { try { localStorage.removeItem(key); } catch {} } };
-const state = { config: {}, user: null, csrf: '', view: 'files', parent: null, entries: [], crumbs: [], search: '', sort: 'updated', layout: storage.get('jtg-layout') || 'list', selected: new Set(), loading: false, uploading: false, maxUpload: 0, chunkSize: 20 * MIB, generation: 0, transfer: null };
+const state = { config: {}, user: null, csrf: '', view: 'files', parent: null, entries: [], crumbs: [], search: '', sort: 'updated', layout: storage.get('aethel-layout') || 'list', selected: new Set(), loading: false, uploading: false, maxUpload: 0, chunkSize: 20 * MIB, generation: 0, transfer: null };
 const paths = {
  cloud:'M6 18a4 4 0 0 1-.5-8A6.5 6.5 0 0 1 18 9a4.5 4.5 0 1 1 0 9H6Z',
  home:'m3 10 9-7 9 7v10H3V10Zm6 10v-7h6v7',
@@ -79,16 +79,16 @@ function applyBrand() {
   $$('[data-brand-name]').forEach(el => el.textContent = c.siteName);
   $$('[data-brand-logo]').forEach(el => el.src = c.logo || '/mark.svg');
 }
-function appearanceControl() { return `<button type="button" class="theme-control" data-action="appearance" aria-label="Change appearance" title="Change appearance">${icon(window.JTGTheme?.theme === 'dark' ? 'moon' : 'sun')}<span>Appearance</span></button>`; }
+function appearanceControl() { return `<button type="button" class="theme-control" data-action="appearance" aria-label="Change appearance" title="Change appearance">${icon(window.AethelTheme?.theme === 'dark' ? 'moon' : 'sun')}<span>Appearance</span></button>`; }
 function updateAppearance() {
-  $$('[data-action="appearance"]').forEach(el => el.innerHTML = `${icon(window.JTGTheme?.theme === 'dark' ? 'moon' : 'sun')}<span>Appearance</span>`);
-  $$('[data-theme-choice]').forEach(el => { const selected = el.dataset.themeChoice === window.JTGTheme?.preference; el.classList.toggle('active', selected); el.setAttribute('aria-pressed', String(selected)); });
+  $$('[data-action="appearance"]').forEach(el => el.innerHTML = `${icon(window.AethelTheme?.theme === 'dark' ? 'moon' : 'sun')}<span>Appearance</span>`);
+  $$('[data-theme-choice]').forEach(el => { const selected = el.dataset.themeChoice === window.AethelTheme?.preference; el.classList.toggle('active', selected); el.setAttribute('aria-pressed', String(selected)); });
 }
 function appearance() {
   modal('Make yourself comfortable', `<p>Choose the look that feels right. Your preference stays on this browser.</p><div class="theme-options">${[['light','sun','Light','Clean and bright'],['dark','moon','Dark','Calm after hours'],['system','monitor','System','Follows your device']].map(([value,name,label,description]) => `<button type="button" data-theme-choice="${value}" class="theme-option" aria-pressed="false"><span class="theme-swatch ${value}">${icon(name)}</span><strong>${label}</strong><small>${description}</small>${icon('check','theme-check')}</button>`).join('')}</div>`, '<button class="btn" data-action="close-modal">Done</button>');
   updateAppearance();
 }
-window.addEventListener('jtg-theme-change', updateAppearance);
+window.addEventListener('aethel-theme-change', updateAppearance);
 const brand = () => `<div class="brand"><img data-brand-logo src="${esc(state.config.logo || '/mark.svg')}" alt=""><span data-brand-name>${esc(state.config.siteName)}</span></div>`;
 
 function renderAuth(register = false) {
@@ -101,7 +101,7 @@ function renderAuth(register = false) {
 const NAV = [['files','folder','My files'],['recent','clock','Recent'],['starred','star','Starred'],['photos','image','Photos'],['trash','trash','Trash']];
 const STAFF = [['users','users','Members'],['settings','settings','Cloud settings'],['audit','activity','Activity log']];
 function renderShell() {
-  $('#app').innerHTML = `<div class="screen-shade" data-action="close-sidebar"></div><aside class="sidebar">${brand()}<div class="nav-label">YOUR WORKSPACE</div><nav class="nav">${NAV.map(([view,name,label]) => `<button data-view="${view}">${icon(name)}${label}</button>`).join('')}</nav>${state.user.role !== 'member' ? `<div class="nav-divider"></div><div class="nav-label">${state.user.role === 'owner' ? 'CLOUD MANAGEMENT' : 'ADMINISTRATION'}</div><nav class="nav">${STAFF.filter(([v]) => state.user.role === 'owner' || v === 'users').map(([view,name,label]) => `<button data-view="${view}">${icon(name)}${label}${view === 'settings' ? '<span class="count">OWNER</span>' : ''}</button>`).join('')}</nav>` : ''}<div class="storage-widget" id="storage-widget"></div><div class="sidebar-foot"><span class="studio-mark">JTG</span> BY JTG STUDIO</div></aside><div class="workspace"><header class="topbar">${button('toggle-sidebar','menu','Open navigation','mobile-menu')}<div class="search">${icon('search')}<input id="search" placeholder="Search your files…" aria-label="Search files"><span class="kbd">Ctrl K</span></div><div class="topbar-right">${appearanceControl()}${button('help','help','Help')}<div class="topbar-separator"></div><button class="profile" data-action="account" aria-label="Open account settings"><div class="avatar ${state.user.role}">${esc(initials(state.user.displayName))}</div><div class="profile-text"><div class="name">${esc(state.user.displayName)}</div><div class="role">${state.user.role}</div></div>${icon('down')}</button></div></header><main class="content" id="content"></main></div>`;
+  $('#app').innerHTML = `<div class="screen-shade" data-action="close-sidebar"></div><aside class="sidebar">${brand()}<div class="nav-label">YOUR WORKSPACE</div><nav class="nav">${NAV.map(([view,name,label]) => `<button data-view="${view}">${icon(name)}${label}</button>`).join('')}</nav>${state.user.role !== 'member' ? `<div class="nav-divider"></div><div class="nav-label">${state.user.role === 'owner' ? 'CLOUD MANAGEMENT' : 'ADMINISTRATION'}</div><nav class="nav">${STAFF.filter(([v]) => state.user.role === 'owner' || v === 'users').map(([view,name,label]) => `<button data-view="${view}">${icon(name)}${label}${view === 'settings' ? '<span class="count">OWNER</span>' : ''}</button>`).join('')}</nav>` : ''}<div class="storage-widget" id="storage-widget"></div><div class="sidebar-foot"><span class="studio-mark">Aethel</span> BY Aethel STUDIO</div></aside><div class="workspace"><header class="topbar">${button('toggle-sidebar','menu','Open navigation','mobile-menu')}<div class="search">${icon('search')}<input id="search" placeholder="Search your files…" aria-label="Search files"><span class="kbd">Ctrl K</span></div><div class="topbar-right">${appearanceControl()}${button('help','help','Help')}<div class="topbar-separator"></div><button class="profile" data-action="account" aria-label="Open account settings"><div class="avatar ${state.user.role}">${esc(initials(state.user.displayName))}</div><div class="profile-text"><div class="name">${esc(state.user.displayName)}</div><div class="role">${state.user.role}</div></div>${icon('down')}</button></div></header><main class="content" id="content"></main></div>`;
   applyBrand(); updateUsage(); markNav();
 }
 function updateUsage() {
@@ -270,7 +270,7 @@ async function fingerprintKey(file, parentId) {
   const metadata = new TextEncoder().encode(JSON.stringify([state.user.id, parentId, file.name, file.webkitRelativePath || '', file.size, file.lastModified]));
   const bytes = new Uint8Array(metadata.length + head.length + tail.length); bytes.set(metadata); bytes.set(head, metadata.length); bytes.set(tail, metadata.length + head.length);
   const {fingerprintDigest}=await import('/fingerprint.js');
-  return `jtg-upload-${state.user.id}-${await fingerprintDigest(bytes)}`;
+  return `aethel-upload-${state.user.id}-${await fingerprintDigest(bytes)}`;
 }
 function rememberUpload(item) {
   const id = item.upload?.id || item.clientId;
@@ -524,14 +524,14 @@ const actions = {
 document.addEventListener('click', async event => {
   const target=event.target.closest('button,a,[data-action]');if(!target)return;
   try {
-    if(target.dataset.themeChoice){window.JTGTheme?.set(target.dataset.themeChoice);return;}
+    if(target.dataset.themeChoice){window.AethelTheme?.set(target.dataset.themeChoice);return;}
     if(state.uploading && !['upload-pause','upload-cancel','toggle-sidebar','close-sidebar'].includes(target.dataset.action)){if(target.dataset.action||target.dataset.open||target.dataset.entryAction||target.dataset.user){toast('Pause your transfer before opening another dialog.');return;}}
     if(target.dataset.action && actions[target.dataset.action])return await actions[target.dataset.action]();
     if(target.dataset.view)return await navigate(target.dataset.view);
     if('parent' in target.dataset)return await navigate('files',target.dataset.parent || null);
     if(target.dataset.open)return openEntry(target.dataset.open);
     if(target.dataset.entryAction)return await entryAction(target.dataset.entryAction,target.dataset.id);
-    if(target.dataset.layout){state.layout=target.dataset.layout;storage.set('jtg-layout',state.layout);renderFiles();return;}
+    if(target.dataset.layout){state.layout=target.dataset.layout;storage.set('aethel-layout',state.layout);renderFiles();return;}
     if(target.dataset.user)return manageUser(target.dataset.user);
     if(target.dataset.category){if(target.dataset.category==='Image')return navigate('photos');const kind=target.dataset.category;const rows=sortedEntries().filter(e=>e.kind==='file'&&(kind==='Other'?!['Image','Document','Archive'].includes(fileType(e).label):fileType(e).label===kind));$('#file-results').innerHTML=rows.length?state.layout==='grid'?fileGrid(rows):fileTable(rows):'<div class="empty">'+tile('file')+'<h3>No files in this category yet.</h3><p>Upload files to see them here.</p><button class="btn soft" data-action="refresh">Show all files</button></div>';$('.file-toolbar h2').textContent=kind==='Other'?'Other files':`${kind}s`;state.selected.clear();updateSelection();}
   }catch(error){toast(error.message,true);}

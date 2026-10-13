@@ -9,7 +9,7 @@ import {ROOT} from '../src/config.mjs';
 
 test('eight-character passwords work across setup, registration, changes, account creation and recovery',async()=>{
   // Use a separate server so password checks do not consume another suite's auth limit.
-  const directory=await mkdtemp(path.join(os.tmpdir(),'jtg-password-'));
+  const directory=await mkdtemp(path.join(os.tmpdir(),'aethel-password-'));
   const dataDir=path.join(directory,'data');let app;
   const cli=(command,input)=>spawnSync(process.execPath,['src/cli.mjs',command,'--stdin'],{cwd:ROOT,encoding:'utf8',input:JSON.stringify(input),env:{...process.env,DATA_DIR:dataDir,BACKUP_DIR:path.join(directory,'backups'),NODE_ENV:'development',APP_URL:'http://localhost:6969'}});
   try {

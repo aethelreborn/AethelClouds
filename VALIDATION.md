@@ -1,4 +1,4 @@
-# Validation of JTG Cloud 1.3.1
+# Validation of Aethel-clouds 1.3.1
 
 Verified locally on Windows with Node.js 24.19.0:
 
@@ -30,7 +30,7 @@ Verified locally on Windows with Node.js 24.19.0:
 - Linux-style PM2 ESM import with a different `process.argv[1]` starts a real HTTP listener and returns the current healthy version; private temporary storage is used.
 - PM2 configuration reads `.env` explicitly, overriding stale port/origin/storage settings and preserving blank fields that clear old values.
 - Legacy PM2 retirement preserves another app and its startup service. Fetch failure during repair occurs before the running service or existing data is touched.
-- Health checks accept the expected JTG Cloud status/version and reject older versions, unrelated HTTP 200 responses and unhealthy status.
+- Health checks accept the expected Aethel-clouds status/version and reject older versions, unrelated HTTP 200 responses and unhealthy status.
 - **Actual PM2 7.0.4**, using an isolated Windows daemon, temporary data and a local test port: initial ecosystem start, stopped-process restart, missing-entry recreation, app health and encryption-key persistence passed. App-only deletion plus two saves preserved another isolated process in both `dump.pm2` and `dump.pm2.bak`. The daemon and temporary storage were removed afterward.
 - Updater follows a renamed remote default branch; divergent history is refused before renaming the local branch.
 - Default service port 6969, all available IPv4 interfaces and localhost access without a website hostname.

@@ -60,7 +60,7 @@ try {
   } else if (command === 'backup') {
     releaseLock = acquireLock(cfg.dataDir);
     store = openStore(cfg.dataDir);
-    const destination = path.join(cfg.backupDir,`jtg-cloud-${new Date().toISOString().replace(/[:.]/g,'-')}-${randomUUID().slice(0,8)}`);
+    const destination = path.join(cfg.backupDir,`aethel-clouds-${new Date().toISOString().replace(/[:.]/g,'-')}-${randomUUID().slice(0,8)}`);
     await mkdir(destination,{recursive:true,mode:0o700});
     store.db.prepare('VACUUM INTO ?').run(path.join(destination,'cloud.sqlite'));
     await cp(path.join(cfg.dataDir,'blobs'),path.join(destination,'blobs'),{recursive:true});

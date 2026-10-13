@@ -13,7 +13,7 @@ import { fail, HttpError, token, digest, hashPassword, verifyPassword, identity,
 import { acquireLock } from './lock.mjs';
 import { createTransfers, reservedUploads, reservedName, entryBlobs, deleteBlobs, downloadRange, downloadBytes } from './transfers.mjs';
 
-const SESSION = 'jtg_session';
+const SESSION = 'aethel_session';
 const STATIC = { '/': ['index.html', 'text/html; charset=utf-8'], '/app.js': ['app.js', 'text/javascript; charset=utf-8'], '/theme.js': ['theme.js', 'text/javascript; charset=utf-8'], '/fingerprint.js': ['fingerprint.js', 'text/javascript; charset=utf-8'], '/styles.css': ['styles.css', 'text/css; charset=utf-8'], '/mark.svg': ['mark.svg', 'image/svg+xml'] };
 const imageType = bytes => {
   if (bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return 'image/png';

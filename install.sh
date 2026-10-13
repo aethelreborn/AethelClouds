@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# JTG Cloud installation and management by JTG Studio.
+# Aethel-clouds installation and management by Aethel Studio.
 set -Eeuo pipefail
 umask 077
-APP_DIR=/root/jtg-cloud
-LEGACY_DIR=/opt/jtg-cloud
-LEGACY_HOME=/home/jtgcloud
-LEGACY_RUNTIME=/opt/jtg-cloud-runtime
-MANAGER_FILE=/root/jtg-cloud-manager.sh
+APP_DIR=/root/aethel-clouds
+LEGACY_DIR=/opt/aethel-clouds
+LEGACY_HOME=/home/aethelcloud
+LEGACY_RUNTIME=/opt/aethel-clouds-runtime
+MANAGER_FILE=/root/aethel-clouds-manager.sh
 REPO_URL=https://github.com/aethelreborn/AethelClouds.git
 REPO_BRANCH=main
 SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd -P)
-LOG_FILE=/var/log/jtg-cloud-install.log
+LOG_FILE=/var/log/aethel-clouds-install.log
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 export PM2_HOME=/root/.pm2
 BOLD='' RESET='' ACCENT='' GREEN='' RED=''
@@ -38,21 +38,21 @@ install_error() {
 open_log() {
   [[ ! -L "$LOG_FILE" ]] || die 'The installer log must not be a symbolic link.'
   touch "$LOG_FILE"; chmod 600 "$LOG_FILE"
-  printf '\nJTG Studio / %s\n' "$(date -u +%FT%TZ)" >>"$LOG_FILE"
+  printf '\nAethel Studio / %s\n' "$(date -u +%FT%TZ)" >>"$LOG_FILE"
   trap 'install_error "$?" "$LINENO"' ERR
 }
 banner() {
   printf '\n%s%s  +----------------------------------------------------+\n' "$BOLD" "$ACCENT"
-  printf '  |                    JTG CLOUD                       |\n'
+  printf '  |                    Aethel CLOUD                       |\n'
   printf '  |          Your files. Your server. Your control.    |\n'
   printf '  +----------------------------------------------------+%s\n' "$RESET"
-  printf '  %sJTG Studio%s  /  VPS CONTROL CENTER\n\n' "$BOLD" "$RESET"
+  printf '  %sAethel Studio%s  /  VPS CONTROL CENTER\n\n' "$BOLD" "$RESET"
   note "Repository  $REPO_URL"
   note "Branch      $REPO_BRANCH"
   note "Directory   $APP_DIR"
   note 'App port    6969'
   note 'PM2         Global install / root account'
-  if [[ -f "$APP_DIR/.jtg-installed" ]]; then success 'Installation complete / use Service status to check PM2';
+  if [[ -f "$APP_DIR/.aethel-installed" ]]; then success 'Installation complete / use Service status to check PM2';
   elif [[ -d "$APP_DIR" || -d "$LEGACY_DIR" ]]; then note 'Status      Existing installation found; choose Repair / migrate';
   else note 'Status      Ready for a new installation'; fi
 }
@@ -62,12 +62,12 @@ installation_plan() {
   note "cd $APP_DIR"
   step 1 'Install Linux requirements'; note 'Git, curl, CA certificates, Python and xz tools.'
   step 2 'Install Node.js LTS and global PM2'; note 'Node.js 24+; npm install -g pm2'
-  step 3 'Clone JTG Cloud and enter the project directory'
+  step 3 'Clone Aethel-clouds and enter the project directory'
   step 4 'Install locked application requirements'; note 'npm ci --omit=dev --ignore-scripts'
   step 5 'Configure private storage'; note 'Root owns and runs the cloud; .env and storage stay private.'
   step 6 'Create the owner account'; note 'Username, email and a password entered privately.'
   step 7 'Show service addresses'; note 'Localhost and IPv4 addresses already assigned to the server.'
-  step 8 'Start JTG Cloud with PM2'; note 'pm2 start ecosystem.config.cjs --only jtg-cloud'
+  step 8 'Start Aethel-clouds with PM2'; note 'pm2 start ecosystem.config.cjs --only aethel-clouds'
   step 9 'Enable automatic startup after reboot'; note 'pm2 startup systemd -u root --hp /root; pm2 save'
   step 10 'Verify cloud health'; note 'Open http://localhost:6969 or http://SERVER_IPV4:6969 and sign in.'
 }
@@ -83,7 +83,7 @@ linux_requirements() {
 install_node() {
   local arch version filename temp expected destination executable
   # Keep a supported system Node; the old private runtime is not reused.
-  if command -v node >/dev/null && command -v npm >/dev/null && [[ "$(command -v node)" != /opt/jtg-cloud-runtime/* ]] && node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 24 ? 0 : 1)' && npm --version >/dev/null 2>&1; then
+  if command -v node >/dev/null && command -v npm >/dev/null && [[ "$(command -v node)" != /opt/aethel-clouds-runtime/* ]] && node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 24 ? 0 : 1)' && npm --version >/dev/null 2>&1; then
     success "Using Node.js $(node --version)"
     return 0
   fi
@@ -140,21 +140,21 @@ clone_project() {
   git -C "$APP_DIR" remote set-url origin "$REPO_URL" || return 1
   [[ -f "$APP_DIR/src/server.mjs" && -f "$APP_DIR/package.json" ]] || return 1
   cd "$APP_DIR" || return 1
-  node -e "if(require('./package.json').name!=='jtg-cloud')process.exit(1)" || return 1
+  node -e "if(require('./package.json').name!=='aethel-clouds')process.exit(1)" || return 1
   success "Source ready in $APP_DIR"
 }
 validate_directory() {
   local directory=$1 resolved
-  case "$directory" in /root/jtg-cloud|/opt/jtg-cloud) ;; *) die 'Refusing an unexpected installation path.';; esac
+  case "$directory" in /root/aethel-clouds|/opt/aethel-clouds) ;; *) die 'Refusing an unexpected installation path.';; esac
   [[ -d "$directory" && ! -L "$directory" ]] || die 'The installation must be a real directory, not a symbolic link.'
   resolved=$(realpath -e -- "$directory")
   [[ "$resolved" == "$directory" ]] || die 'The resolved installation path is unsafe.'
-  [[ -d "$directory/.git" && -f "$directory/src/server.mjs" && -f "$directory/package.json" ]] || die 'This directory is not a managed JTG Cloud checkout.'
+  [[ -d "$directory/.git" && -f "$directory/src/server.mjs" && -f "$directory/package.json" ]] || die 'This directory is not a managed Aethel-clouds checkout.'
   [[ ! -L "$directory/.git" && "$(realpath -e -- "$directory/package.json")" == "$directory/package.json" && "$(realpath -e -- "$directory/src/server.mjs")" == "$directory/src/server.mjs" ]] || die 'Managed source files must not redirect through symbolic links.'
   if [[ -e "$directory/.env" || -L "$directory/.env" ]]; then
     [[ ! -L "$directory/.env" && "$(realpath -e -- "$directory/.env")" == "$directory/.env" ]] || die 'The managed environment must not be a symbolic link.'
   fi
-  node -e "if(require(process.argv[1]).name!=='jtg-cloud')process.exit(1)" "$directory/package.json" || die 'Unexpected application in the installation directory.'
+  node -e "if(require(process.argv[1]).name!=='aethel-clouds')process.exit(1)" "$directory/package.json" || die 'Unexpected application in the installation directory.'
 }
 validate_storage() {
   [[ -f .env ]] || return 0
@@ -188,7 +188,7 @@ if(oldRoot!==newRoot) text=text.replace(/^(DATA_DIR|BACKUP_DIR)=(.*)$/gm,(line,k
   const bare=quote?value.slice(1,-1):value;
   return bare===oldRoot||bare.startsWith(`${oldRoot}/`)?`${key}=${quote}${newRoot}${bare.slice(oldRoot.length)}${quote}`:line;
 });
-for(const [key,value] of Object.entries({PORT:'6969',HOST:'0.0.0.0',NODE_ENV:'production',APP_URL:'',TRUST_PROXY:'false',COOKIE_SECURE:'false',JTG_NETWORK_MODE:'direct-v1'})) {
+for(const [key,value] of Object.entries({PORT:'6969',HOST:'0.0.0.0',NODE_ENV:'production',APP_URL:'',TRUST_PROXY:'false',COOKIE_SECURE:'false',Aethel_NETWORK_MODE:'direct-v1'})) {
   const expression=new RegExp(`^${key}=.*$`,'gm');
   text=expression.test(text)?text.replace(expression,`${key}=${value}`):`${text.trimEnd()}\n${key}=${value}\n`;
 }
@@ -206,44 +206,44 @@ process_state() {
   PM2_HOME="$home" pm2 ping >/dev/null
   PM2_HOME="$home" pm2 jlist | node --input-type=module -e '
     import fs from "node:fs";
-    const apps=JSON.parse(fs.readFileSync(0,"utf8")).filter(item=>item.name==="jtg-cloud");
+    const apps=JSON.parse(fs.readFileSync(0,"utf8")).filter(item=>item.name==="aethel-clouds");
     if(!apps.length) {console.log("missing");process.exit(0);}
-    if(apps.some(app=>!["/root/jtg-cloud/src/server.mjs","/opt/jtg-cloud/src/server.mjs"].includes(app.pm2_env?.pm_exec_path))) throw new Error("PM2 name jtg-cloud belongs to a different application. Refusing to change it.");
+    if(apps.some(app=>!["/root/aethel-clouds/src/server.mjs","/opt/aethel-clouds/src/server.mjs"].includes(app.pm2_env?.pm_exec_path))) throw new Error("PM2 name aethel-clouds belongs to a different application. Refusing to change it.");
     console.log(apps[0].pm2_env.status || "unknown");'
 }
 stop_managed_process() {
   local home=$1 state
   state=$(process_state "$home")
-  if [[ "$state" != missing ]]; then PM2_HOME="$home" pm2 stop jtg-cloud; fi
+  if [[ "$state" != missing ]]; then PM2_HOME="$home" pm2 stop aethel-clouds; fi
 }
 delete_managed_process() {
   local home=$1 state
   state=$(process_state "$home")
-  if [[ "$state" != missing ]]; then PM2_HOME="$home" pm2 delete jtg-cloud; fi
+  if [[ "$state" != missing ]]; then PM2_HOME="$home" pm2 delete aethel-clouds; fi
   # Save twice so PM2's fallback dump also cannot resurrect the removed cloud.
   PM2_HOME="$home" pm2 save --force
   PM2_HOME="$home" pm2 save --force
 }
-legacy_pm2_exists() { [[ -S /home/jtgcloud/.pm2/rpc.sock || -f /home/jtgcloud/.pm2/dump.pm2 ]]; }
+legacy_pm2_exists() { [[ -S /home/aethelcloud/.pm2/rpc.sock || -f /home/aethelcloud/.pm2/dump.pm2 ]]; }
 retire_legacy_pm2() {
   LEGACY_PM2_SHARED=0
   legacy_pm2_exists || return 0
-  delete_managed_process /home/jtgcloud/.pm2
+  delete_managed_process /home/aethelcloud/.pm2
   # This startup belongs to the previous service account; keep it if other apps use it.
-  if PM2_HOME=/home/jtgcloud/.pm2 pm2 jlist | node -e 'let s="";for await(const c of process.stdin)s+=c;process.exit(JSON.parse(s).length?1:0)' --input-type=module; then
-    if [[ -f /etc/systemd/system/pm2-jtgcloud.service ]] && grep -q '/home/jtgcloud/.pm2' /etc/systemd/system/pm2-jtgcloud.service; then
-      systemctl disable --now pm2-jtgcloud
-      rm -f -- /etc/systemd/system/pm2-jtgcloud.service
+  if PM2_HOME=/home/aethelcloud/.pm2 pm2 jlist | node -e 'let s="";for await(const c of process.stdin)s+=c;process.exit(JSON.parse(s).length?1:0)' --input-type=module; then
+    if [[ -f /etc/systemd/system/pm2-aethelcloud.service ]] && grep -q '/home/aethelcloud/.pm2' /etc/systemd/system/pm2-aethelcloud.service; then
+      systemctl disable --now pm2-aethelcloud
+      rm -f -- /etc/systemd/system/pm2-aethelcloud.service
       systemctl daemon-reload
     fi
-    PM2_HOME=/home/jtgcloud/.pm2 pm2 kill
+    PM2_HOME=/home/aethelcloud/.pm2 pm2 kill
   else
     LEGACY_PM2_SHARED=1
   fi
 }
 validate_removal_path() {
   local target=$1 parent
-  case "$target" in /root/jtg-cloud|/opt/jtg-cloud|/home/jtgcloud|/opt/jtg-cloud-runtime|/root/jtg-cloud-manager.sh) ;; *) die 'Refusing an unexpected removal path.';; esac
+  case "$target" in /root/aethel-clouds|/opt/aethel-clouds|/home/aethelcloud|/opt/aethel-clouds-runtime|/root/aethel-clouds-manager.sh) ;; *) die 'Refusing an unexpected removal path.';; esac
   [[ -e "$target" || -L "$target" ]] || return 0
   parent=$(dirname -- "$target")
   [[ "$(realpath -e -- "$parent")" == "$parent" ]] || die 'The removal parent redirects outside the managed path.'
@@ -254,7 +254,7 @@ validate_removal_path() {
       local mount mounts
       mounts=$(findmnt --raw --noheadings --output TARGET) || die 'Could not check filesystem mounts before uninstall.'
       while IFS= read -r mount; do
-        [[ "$mount" != "$target" && "$mount" != "$target/"* ]] || die "Unmount $mount before removing JTG Cloud."
+        [[ "$mount" != "$target" && "$mount" != "$target/"* ]] || die "Unmount $mount before removing Aethel-clouds."
       done <<< "$mounts"
     fi
   fi
@@ -271,9 +271,9 @@ cleanup_pm2_files() {
   local folder file name
   for folder in /root/.pm2/logs /root/.pm2/pids; do
     [[ -d "$folder" && "$(realpath -e -- "$folder")" == "$folder" ]] || continue
-    for file in "$folder"/jtg-cloud-*; do
+    for file in "$folder"/aethel-clouds-*; do
       name=${file##*/}
-      if [[ "$name" =~ ^jtg-cloud-(out|error)(-[0-9]+)?\.log$ || "$name" =~ ^jtg-cloud-[0-9]+\.pid$ ]]; then rm -f -- "$file"; fi
+      if [[ "$name" =~ ^aethel-clouds-(out|error)(-[0-9]+)?\.log$ || "$name" =~ ^aethel-clouds-[0-9]+\.pid$ ]]; then rm -f -- "$file"; fi
     done
   done
 }
@@ -283,9 +283,9 @@ health() {
     if curl --noproxy '*' --connect-timeout 2 --max-time 3 --fail --silent http://127.0.0.1:6969/api/health | node -e 'try {const body=JSON.parse(require("node:fs").readFileSync(0,"utf8"));process.exit(body.status==="ok"&&body.version===require("./package.json").version?0:1)} catch {process.exit(1)}'; then return 0; fi
     sleep 1
   done
-  printf 'Health check failed. Run: pm2 logs jtg-cloud --lines 50\n' >&2
+  printf 'Health check failed. Run: pm2 logs aethel-clouds --lines 50\n' >&2
   curl --noproxy '*' --connect-timeout 2 --max-time 3 --silent --show-error http://127.0.0.1:6969/api/health >&2 || true
-  if command -v pm2 >/dev/null; then pm2 logs jtg-cloud --lines 30 --nostream >&2 || true; fi
+  if command -v pm2 >/dev/null; then pm2 logs aethel-clouds --lines 30 --nostream >&2 || true; fi
   return 1
 }
 ensure_owner() {
@@ -307,15 +307,15 @@ JS
 }
 show_addresses() { node --env-file=.env --input-type=module -e "import {serviceUrls} from './src/config.mjs'; console.log(serviceUrls(6969).join('\n'))"; }
 enable_startup() { pm2 startup systemd -u root --hp /root; pm2 save; }
-mark_installed() { printf 'Setup completed: %s\n' "$(date -u +%FT%TZ)" > "$APP_DIR/.jtg-installed"; chmod 600 "$APP_DIR/.jtg-installed"; }
+mark_installed() { printf 'Setup completed: %s\n' "$(date -u +%FT%TZ)" > "$APP_DIR/.aethel-installed"; chmod 600 "$APP_DIR/.aethel-installed"; }
 restart_project() {
   require_root; validate_directory "$APP_DIR"; cd "$APP_DIR"
   [[ -f .env ]] || die 'Setup is incomplete. Choose Repair / migrate.'
   command -v pm2 >/dev/null || die 'PM2 is missing. Choose Repair / migrate to install global PM2.'
   process_state "$PM2_HOME" >/dev/null
   # This also recreates a missing PM2 entry, so there is no separate Start menu.
-  pm2 startOrRestart ecosystem.config.cjs --only jtg-cloud --update-env --interpreter "$(command -v node)"
-  health; pm2 save; success 'JTG Cloud restarted on port 6969'
+  pm2 startOrRestart ecosystem.config.cjs --only aethel-clouds --update-env --interpreter "$(command -v node)"
+  health; pm2 save; success 'Aethel-clouds restarted on port 6969'
 }
 install_project() {
   require_root
@@ -323,22 +323,22 @@ install_project() {
   open_log
   step 1 'Install Linux requirements'; linux_requirements
   step 2 'Install Node.js LTS and global PM2'; install_node; install_pm2
-  [[ "$(process_state "$PM2_HOME")" == missing ]] || die 'A JTG Cloud PM2 entry already exists. Use Repair / migrate for an existing installation.'
-  step 3 'Clone JTG Cloud and enter the project directory'; clone_project
+  [[ "$(process_state "$PM2_HOME")" == missing ]] || die 'A Aethel-clouds PM2 entry already exists. Use Repair / migrate for an existing installation.'
+  step 3 'Clone Aethel-clouds and enter the project directory'; clone_project
   step 4 'Install locked application requirements'; run_command npm ci --omit=dev --ignore-scripts
   step 5 'Configure private storage'; configure_environment; private_permissions
   step 6 'Create the owner account'; ensure_owner
   step 7 'Show service addresses'; show_addresses
-  step 8 'Start JTG Cloud with PM2'; pm2 start ecosystem.config.cjs --only jtg-cloud --interpreter "$(command -v node)"
+  step 8 'Start Aethel-clouds with PM2'; pm2 start ecosystem.config.cjs --only aethel-clouds --interpreter "$(command -v node)"
   step 9 'Enable automatic startup after reboot'; enable_startup
   step 10 'Verify cloud health'; health
   mark_installed
   trap - ERR
   heading 'INSTALLATION COMPLETE'
-  success 'JTG Cloud is ready on port 6969'
+  success 'Aethel-clouds is ready on port 6969'
   note "Directory: $APP_DIR"
-  note 'Restart: pm2 restart jtg-cloud --update-env'
-  note 'Logs:    pm2 logs jtg-cloud'
+  note 'Restart: pm2 restart aethel-clouds --update-env'
+  note 'Logs:    pm2 logs aethel-clouds'
   note "Menu:    sudo bash $APP_DIR/install.sh"
 }
 backup_existing() {
@@ -352,7 +352,7 @@ const data=path.resolve(process.env.DATA_DIR || 'data');
 if(!fs.existsSync(path.join(data,'cloud.sqlite'))) {console.log('No existing database to back up.');process.exit(0);}
 const key=path.join(data,'encryption.key');
 if(!fs.existsSync(key)) throw new Error('Encryption key is missing. Repair must not create a replacement for existing data.');
-const destination=path.join(path.resolve(process.env.BACKUP_DIR || 'backups'),`jtg-cloud-${Date.now()}-${randomUUID().slice(0,8)}`);
+const destination=path.join(path.resolve(process.env.BACKUP_DIR || 'backups'),`aethel-clouds-${Date.now()}-${randomUUID().slice(0,8)}`);
 fs.mkdirSync(destination,{recursive:true,mode:0o700});
 const db=new DatabaseSync(path.join(data,'cloud.sqlite'));
 try {db.prepare('VACUUM INTO ?').run(path.join(destination,'cloud.sqlite'));} finally {db.close();}
@@ -377,9 +377,9 @@ repair_project() {
   git -c safe.directory="$existing" fetch origin "$REPO_BRANCH"
   git -c safe.directory="$existing" merge-base --is-ancestor HEAD "origin/$REPO_BRANCH" || die 'Source has diverged. Repair will not overwrite your commits.'
   process_state "$PM2_HOME" >/dev/null
-  if legacy_pm2_exists; then process_state /home/jtgcloud/.pm2 >/dev/null; fi
+  if legacy_pm2_exists; then process_state /home/aethelcloud/.pm2 >/dev/null; fi
   stop_managed_process "$PM2_HOME"
-  if legacy_pm2_exists; then stop_managed_process /home/jtgcloud/.pm2; fi
+  if legacy_pm2_exists; then stop_managed_process /home/aethelcloud/.pm2; fi
   backup_existing
   retire_legacy_pm2
   git -c safe.directory="$existing" merge --ff-only "origin/$REPO_BRANCH"
@@ -412,22 +412,22 @@ uninstall_project() {
   require_root
   local confirmation target runtime_shared=0
   if ! command -v pm2 >/dev/null || ! command -v node >/dev/null; then
-    export PATH="$PATH:/opt/jtg-cloud-runtime/current/bin:/opt/jtg-cloud-runtime/pm2/bin"
+    export PATH="$PATH:/opt/aethel-clouds-runtime/current/bin:/opt/aethel-clouds-runtime/pm2/bin"
   fi
   # Uninstall must also work for empty/partial folders without .git, package.json or .env.
   for target in "$APP_DIR" "$LEGACY_DIR" "$LEGACY_HOME" "$LEGACY_RUNTIME" "$MANAGER_FILE"; do validate_removal_path "$target"; done
-  heading 'UNINSTALL JTG CLOUD'
+  heading 'UNINSTALL Aethel CLOUD'
   note "Permanently removes $APP_DIR and $LEGACY_DIR, including accounts, files, keys and backups inside them."
-  note 'Unused old JTG runtime, service home, manager script and cloud logs are also removed.'
+  note 'Unused old Aethel runtime, service home, manager script and cloud logs are also removed.'
   note 'Copy any backup you need outside this directory first.'
   note 'Global Node.js, PM2 and other PM2 applications remain installed.'
-  read -r -p '  Delete JTG Cloud and all its stored data? [y/N]: ' confirmation || return 0
+  read -r -p '  Delete Aethel-clouds and all its stored data? [y/N]: ' confirmation || return 0
   case "${confirmation%$'\r'}" in y|Y|yes|YES|Yes) ;; *) note 'Uninstall cancelled. Nothing removed.'; return 0;; esac
   LEGACY_PM2_SHARED=0
   if command -v pm2 >/dev/null && command -v node >/dev/null; then
     # Check both names before mutating either process list.
     process_state "$PM2_HOME" >/dev/null
-    if legacy_pm2_exists; then process_state /home/jtgcloud/.pm2 >/dev/null; fi
+    if legacy_pm2_exists; then process_state /home/aethelcloud/.pm2 >/dev/null; fi
     delete_managed_process "$PM2_HOME"; retire_legacy_pm2
     # A running daemon may still load the old runtime's process-container code.
     # Retain it when other apps remain; kill an empty daemon before deleting its old files.
@@ -439,7 +439,7 @@ uninstall_project() {
   cd /root
   remove_managed_path "$APP_DIR"
   remove_managed_path "$LEGACY_DIR"
-  if command -v pgrep >/dev/null && id -u jtgcloud >/dev/null 2>&1 && pgrep -u jtgcloud >/dev/null; then LEGACY_PM2_SHARED=1; fi
+  if command -v pgrep >/dev/null && id -u aethelcloud >/dev/null 2>&1 && pgrep -u aethelcloud >/dev/null; then LEGACY_PM2_SHARED=1; fi
   if [[ "$LEGACY_PM2_SHARED" == 0 ]]; then remove_managed_path "$LEGACY_HOME";
   elif [[ -e "$LEGACY_HOME" || -L "$LEGACY_HOME" ]]; then note 'The old service home is used by another running service and was preserved.'; fi
   if [[ "$LEGACY_PM2_SHARED" == 0 && "$runtime_shared" == 0 ]]; then remove_managed_path "$LEGACY_RUNTIME";
@@ -447,7 +447,7 @@ uninstall_project() {
   remove_managed_path "$MANAGER_FILE"
   cleanup_pm2_files
   rm -f -- "$LOG_FILE"
-  success 'JTG Cloud is uninstalled. Choose Install for a fresh cloud and a new owner account.'
+  success 'Aethel-clouds is uninstalled. Choose Install for a fresh cloud and a new owner account.'
 }
 main() {
   case "${1:-}" in
@@ -459,7 +459,7 @@ main() {
   banner
   while true; do
     heading 'CLOUD MANAGEMENT'
-    printf '  %s1%s  Install JTG Cloud\n  %s2%s  Update JTG Cloud\n  %s3%s  Restart cloud\n  %s4%s  Stop cloud\n  %s5%s  Service status\n  %s6%s  Reset account password\n  %s7%s  Back up cloud\n  %s8%s  Preview installation plan\n  %s9%s  Repair / migrate installation\n  %s10%s Uninstall JTG Cloud\n  %s0%s  Exit\n\n' "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET"
+    printf '  %s1%s  Install Aethel-clouds\n  %s2%s  Update Aethel-clouds\n  %s3%s  Restart cloud\n  %s4%s  Stop cloud\n  %s5%s  Service status\n  %s6%s  Reset account password\n  %s7%s  Back up cloud\n  %s8%s  Preview installation plan\n  %s9%s  Repair / migrate installation\n  %s10%s Uninstall Aethel-clouds\n  %s0%s  Exit\n\n' "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET" "$BOLD" "$RESET"
     local choice
     read -r -p '  Select an option [0-10]: ' choice || return 0
     choice=${choice%$'\r'}
@@ -474,7 +474,7 @@ main() {
       8) installation_plan;;
       9) repair_project;;
       10) uninstall_project;;
-      0) printf '\n  JTG Studio / See you next time.\n'; return 0;;
+      0) printf '\n  Aethel Studio / See you next time.\n'; return 0;;
       *) note 'Choose one of the menu options.';;
     esac
   done
