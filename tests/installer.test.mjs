@@ -62,7 +62,7 @@ test('installer preview is noninteractive and does not invoke system commands', 
     bash ./install.sh --dry-run
   `]);
   assert.match(output, /JTG Studio/);
-  assert.match(output, /git clone --branch jtg-studio https:\/\/github\.com\/JishnuTheGamer\/jtg-cloud\.git \/root\/jtg-cloud/);
+  assert.match(output, /git clone --branch main https:\/\/github\.com\/aethelreborn\/AethelClouds\.git \/root\/jtg-cloud/);
   assert.match(output, /cd \/root\/jtg-cloud\n/);
   assert.match(output, /npm install -g pm2/);
   assert.match(output, /pm2 startup systemd -u root --hp \/root/);
@@ -101,7 +101,7 @@ test('private checkout deployment clones committed source without data or Git cr
       printf '{"name":"jtg-cloud"}\\n' > "$SOURCE_DIR/package.json"
       printf '// fixture\\n' > "$SOURCE_DIR/src/server.mjs"
       printf '.env\\ndata/\\n' > "$SOURCE_DIR/.gitignore"
-      git init --quiet --initial-branch=jtg-studio "$SOURCE_DIR"
+      git init --quiet --initial-branch=main "$SOURCE_DIR"
       git -C "$SOURCE_DIR" add .
       git -C "$SOURCE_DIR" -c user.name='Installer Test' -c user.email='test@example.invalid' commit --quiet -m fixture
       git -C "$SOURCE_DIR" remote add origin "$REPO_URL"
@@ -112,7 +112,7 @@ test('private checkout deployment clones committed source without data or Git cr
       printf '{"name":"uncommitted-change"}\\n' > "$SOURCE_DIR/package.json"
       clone_project
       [[ "$PWD" == "$(cd "$APP_DIR" && pwd)" ]]
-      [[ "$(git symbolic-ref --short HEAD)" == jtg-studio ]]
+      [[ "$(git symbolic-ref --short HEAD)" == main ]]
       [[ "$(git remote get-url origin)" == "$REPO_URL" ]]
       [[ -z "$(git config --local --get credential.helper || true)" ]]
     `], { JTG_TEST_ROOT: temporary.replaceAll('\\', '/') });
@@ -158,17 +158,17 @@ test('updater follows a renamed remote branch and refuses divergent history', { 
       git -C "$repo" -c user.name='Update Test' -c user.email='test@example.invalid' commit --quiet --allow-empty -m initial
       git clone --quiet --bare "$repo" "$remote"
       git clone --quiet "$remote" "$checkout"
-      git -C "$repo" branch -m jtg-studio
+      git -C "$repo" branch -m main
       git -C "$repo" -c user.name='Update Test' -c user.email='test@example.invalid' commit --quiet --allow-empty -m update
-      git -C "$repo" push --quiet "$remote" jtg-studio
-      git -C "$remote" symbolic-ref HEAD refs/heads/jtg-studio
+      git -C "$repo" push --quiet "$remote" main
+      git -C "$remote" symbolic-ref HEAD refs/heads/main
       git -C "$remote" branch -D previous-release
       cd "$checkout"
       git fetch --quiet --prune origin
       follow_remote_branch
-      [[ "$branch" == jtg-studio ]]
-      [[ "$(git symbolic-ref --short HEAD)" == jtg-studio ]]
-      [[ "$(git rev-parse --abbrev-ref '@{upstream}')" == origin/jtg-studio ]]
+      [[ "$branch" == main ]]
+      [[ "$(git symbolic-ref --short HEAD)" == main ]]
+      [[ "$(git rev-parse --abbrev-ref '@{upstream}')" == origin/main ]]
       git merge --quiet --ff-only "origin/$branch"
       # A local commit diverges from a new remote commit after another rename.
       git -c user.name='Update Test' -c user.email='test@example.invalid' commit --quiet --allow-empty -m local-only
@@ -176,10 +176,10 @@ test('updater follows a renamed remote branch and refuses divergent history', { 
       git -C "$repo" -c user.name='Update Test' -c user.email='test@example.invalid' commit --quiet --allow-empty -m different-update
       git -C "$repo" push --quiet "$remote" next-release
       git -C "$remote" symbolic-ref HEAD refs/heads/next-release
-      git -C "$remote" branch -D jtg-studio
+      git -C "$remote" branch -D main
       git fetch --quiet --prune origin
       if follow_remote_branch; then exit 98; fi
-      [[ "$(git symbolic-ref --short HEAD)" == jtg-studio ]]
+      [[ "$(git symbolic-ref --short HEAD)" == main ]]
     `], { JTG_TEST_ROOT: temporary.replaceAll('\\', '/') });
   } finally {
     assert.equal(path.dirname(temporary), os.tmpdir());
@@ -419,7 +419,7 @@ test('partial and duplicate leftovers uninstall completely, then a new install g
     mkdir -p "$SOURCE_DIR" "$APP_DIR" "$LEGACY_DIR" "$LEGACY_HOME" "$LEGACY_RUNTIME"
     cp -R ./src "$SOURCE_DIR/src"
     cp package.json package-lock.json .env.example .gitignore "$SOURCE_DIR/"
-    git init --quiet --initial-branch=jtg-studio "$SOURCE_DIR"
+    git init --quiet --initial-branch=main "$SOURCE_DIR"
     git -C "$SOURCE_DIR" add .
     git -C "$SOURCE_DIR" -c user.name='Fresh Install Test' -c user.email='test@example.invalid' commit --quiet -m fixture
     git -C "$SOURCE_DIR" remote add origin "$REPO_URL"
@@ -495,7 +495,7 @@ test('repair migrates an older fixture after a backup and retains its owner and 
     printf 'DATA_DIR=./data\\nBACKUP_DIR=./backups\\nPORT=6696\\n' > "$LEGACY_DIR/.env"
     printf 'saved encrypted part' > "$LEGACY_DIR/data/blobs/part"
     printf 'saved encryption key' > "$LEGACY_DIR/data/encryption.key"
-    git init --quiet --initial-branch=jtg-studio "$LEGACY_DIR"
+    git init --quiet --initial-branch=main "$LEGACY_DIR"
     git -C "$LEGACY_DIR" add .
     git -C "$LEGACY_DIR" -c user.name='Repair Test' -c user.email='test@example.invalid' commit --quiet -m previous
     git clone --quiet --bare "$LEGACY_DIR" "$JTG_TEST_ROOT/remote.git"

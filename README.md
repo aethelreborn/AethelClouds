@@ -20,14 +20,14 @@ Your files. Your server. A responsive storage panel by **JTG Studio**, running o
 
 ## Repository
 
-The source is **public** at [JishnuTheGamer/jtg-cloud](https://github.com/JishnuTheGamer/jtg-cloud), on branch **`jtg-studio`**. Keep `.env`, `data/`, `backups/` and credentials out of Git.
+The source is **public** at [aethelreborn/AethelClouds](https://github.com/aethelreborn/AethelClouds), on branch **`main`**. Keep `.env`, `data/`, `backups/` and credentials out of Git.
 
 ## Local startup
 
 Install Node.js 24 or newer, then:
 
 ```sh
-git clone https://github.com/JishnuTheGamer/jtg-cloud.git
+git clone https://github.com/aethelreborn/AethelClouds.git
 cd jtg-cloud
 npm ci
 cp .env.example .env
@@ -46,7 +46,7 @@ The service runs directly over HTTP. `APP_URL` is blank by default, so localhost
 Supported: **Debian 12+ / Ubuntu 22.04+**, x86_64 or ARM64, systemd, root/sudo access and enough disk for members' storage. Run the manager from outside the target project directory; the installer installs Git and clones the project itself.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/JishnuTheGamer/jtg-cloud/jtg-studio/install.sh -o /root/jtg-cloud-manager.sh && bash /root/jtg-cloud-manager.sh
+curl -fsSL https://raw.githubusercontent.com/aethelreborn/AethelClouds/main/install.sh -o /root/jtg-cloud-manager.sh && bash /root/jtg-cloud-manager.sh
 ```
 
 Choose **1** for a new installation, or **9** to repair an existing installation. Preview without installing: `bash /root/jtg-cloud-manager.sh --dry-run`.
@@ -79,7 +79,7 @@ Download the latest management script outside the installed project, then choose
 
 ```sh
 sudo -i
-curl -fL https://raw.githubusercontent.com/JishnuTheGamer/jtg-cloud/jtg-studio/install.sh -o /root/jtg-cloud-manager.sh
+curl -fL https://raw.githubusercontent.com/aethelreborn/AethelClouds/main/install.sh -o /root/jtg-cloud-manager.sh
 bash /root/jtg-cloud-manager.sh
 ```
 
@@ -90,7 +90,7 @@ Repair installs global PM2, fetches the current source before stopping the cloud
 Run the latest manager and choose **10**:
 
 ```sh
-bash <(curl -fsSL https://raw.githubusercontent.com/JishnuTheGamer/jtg-cloud/jtg-studio/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/aethelreborn/AethelClouds/main/install.sh)
 ```
 
 Answer **Y** to delete, or **N/Enter** to cancel. Uninstall removes the cloud's PM2 entry, updates both saved process lists and **deletes the complete current and old project directories**, including accounts, uploads, encryption key, environment and backups inside them. It also cleans empty/partial leftovers without requiring `.git`, `package.json` or `.env`. Repeating uninstall is safe. After cleanup, the menu remains open: choose **1** for a fresh installation with a new owner and encryption key. Copy a backup outside the project first if you want to retain it.

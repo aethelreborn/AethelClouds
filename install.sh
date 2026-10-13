@@ -7,8 +7,8 @@ LEGACY_DIR=/opt/jtg-cloud
 LEGACY_HOME=/home/jtgcloud
 LEGACY_RUNTIME=/opt/jtg-cloud-runtime
 MANAGER_FILE=/root/jtg-cloud-manager.sh
-REPO_URL=https://github.com/JishnuTheGamer/jtg-cloud.git
-REPO_BRANCH=jtg-studio
+REPO_URL=https://github.com/aethelreborn/AethelClouds.git
+REPO_BRANCH=main
 SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd -P)
 LOG_FILE=/var/log/jtg-cloud-install.log
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
@@ -130,7 +130,7 @@ clone_project() {
     source_remote=$(git -c safe.directory="$SOURCE_DIR" -C "$SOURCE_DIR" remote get-url origin 2>/dev/null) || source_remote=''
   fi
   case "$source_remote" in
-    "$REPO_URL"|"${REPO_URL%.git}"|git@github.com:JishnuTheGamer/jtg-cloud.git)
+    "$REPO_URL"|"${REPO_URL%.git}"|git@github.com:aethelreborn/AethelClouds.git)
       note 'Using the local checkout (committed source only).'
       run_command git -c safe.directory="$SOURCE_DIR" clone --no-hardlinks --branch "$REPO_BRANCH" -- "$SOURCE_DIR" "$APP_DIR" || return 1;;
     *)
