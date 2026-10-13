@@ -71,7 +71,7 @@ async function api(route, options = {}) {
 }
 function applyBrand() {
   const c = state.config;
-  document.title = c.siteName || 'JTG Cloud';
+  document.title = c.siteName || 'Aethel-clouds';
   document.documentElement.style.setProperty('--accent', c.accent || '#7367f0');
   document.documentElement.style.setProperty('--accent-soft', `${c.accent || '#7367f0'}15`);
   $('#favicon').href = c.favicon || '/mark.svg';

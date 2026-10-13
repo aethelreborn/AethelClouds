@@ -490,7 +490,7 @@ export async function createApp(overrides = {}) {
 const entryFile = fileURLToPath(import.meta.url);
 if ([process.argv[1], process.env.pm_exec_path].filter(Boolean).some(filename => path.resolve(filename) === entryFile)) {
   const app = await createApp();
-  app.server.listen(app.cfg.port, app.cfg.host, () => console.log(`JTG Cloud is running on ${app.cfg.host}:${app.cfg.port}\n${serviceUrls(app.cfg.port,app.cfg.host).join('\n')}`));
+  app.server.listen(app.cfg.port, app.cfg.host, () => console.log(`Aethel-clouds is running on ${app.cfg.host}:${app.cfg.port}\n${serviceUrls(app.cfg.port,app.cfg.host).join('\n')}`));
   app.server.on('error', error => { console.error(error.message); process.exitCode = 1; });
   let stopping = false;
   for (const signal of ['SIGINT','SIGTERM']) process.on(signal, async () => {

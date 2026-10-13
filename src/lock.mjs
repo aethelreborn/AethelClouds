@@ -15,7 +15,7 @@ export function acquireLock(dataDir) {
       let running = true;
       try { if (!Number.isInteger(pid) || pid < 1) throw new Error('Invalid server lock; inspect it manually.'); process.kill(pid,0); }
       catch (failure) { if (failure.code === 'ESRCH') running = false; else throw failure; }
-      if (running) throw new Error('JTG Cloud is running or a backup is in progress. Stop it before starting another instance or making a backup.');
+      if (running) throw new Error('Aethel-clouds is running or a backup is in progress. Stop it before starting another instance or making a backup.');
       unlinkSync(filename);
     }
   }

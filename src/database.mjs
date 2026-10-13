@@ -80,7 +80,7 @@ export function openStore(dataDir) {
     db.exec("ALTER TABLE entries ADD COLUMN storage_format TEXT NOT NULL DEFAULT 'legacy'");
   }
   const defaults = {
-    siteName: 'JTG Cloud', tagline: 'Your files. Your cloud.', registrationEnabled: true,
+    siteName: 'Aethel-clouds', tagline: 'Your files. Your cloud.', registrationEnabled: true,
     defaultQuota: 5 * GiB, maxUpload: 0, uploadChunkSize: 20 * MiB, accent: '#7367f0', logo: '', favicon: ''
   };
   for (const [name, value] of Object.entries(defaults)) db.prepare('INSERT OR IGNORE INTO settings VALUES (?,?)').run(name, JSON.stringify(value));

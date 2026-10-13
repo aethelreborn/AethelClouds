@@ -40,7 +40,7 @@ try {
     releaseLock = acquireLock(cfg.dataDir);
     store = openStore(cfg.dataDir);
     if (store.db.prepare("SELECT id FROM users WHERE role='owner'").get()) throw new Error('An owner already exists. Setup never creates a second owner. Use reset-password to recover access.');
-    console.log('\nJTG Cloud · Create the one protected owner account\n');
+    console.log('\nAethel-clouds · Create the one protected owner account\n');
     const input = await credentials(), data = identity(input), passwordHash = await hashPassword(input.password);
     const id = randomUUID();
     store.db.prepare('INSERT INTO users VALUES (?,?,?,?,?,?,?,?,?)').run(id,data.username,data.email,data.displayName,passwordHash,'owner',Math.max(settings(store.db).defaultQuota,50*GiB),1,Date.now());
@@ -68,7 +68,7 @@ try {
     await chmod(path.join(destination,'encryption.key'),0o600);
     console.log(`Backup saved: ${destination}\nKeep this directory private: it contains the encryption key. Restore database, blobs and key together.`);
   } else {
-    console.log('JTG Cloud server commands:\n  npm run setup                  Create the first and only owner\n  node --env-file-if-exists=.env src/cli.mjs reset-password\n  node --env-file-if-exists=.env src/cli.mjs backup  (stop PM2 first)\n\nFor automation, setup and reset-password accept JSON through stdin with --stdin. Never pass passwords in command arguments.');
+    console.log('Aethel-clouds server commands:\n  npm run setup                  Create the first and only owner\n  node --env-file-if-exists=.env src/cli.mjs reset-password\n  node --env-file-if-exists=.env src/cli.mjs backup  (stop PM2 first)\n\nFor automation, setup and reset-password accept JSON through stdin with --stdin. Never pass passwords in command arguments.');
   }
 } catch (error) { console.error(`Error: ${error.message}`); process.exitCode = 1; }
 finally { rl?.close(); store?.db.close(); releaseLock?.(); }
